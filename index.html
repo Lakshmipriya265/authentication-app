@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<head>
+    <title>Form Demo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #fafafa;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px auto;
+            width: 300px;
+        }
+        h2 {
+            margin-top: 0;
+            font-size: 18px;
+            color: #333;
+        }
+        label {
+            display: block;
+            margin: 8px 0 4px;
+            text-align: left;
+            font-size: 14px;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 6px;
+            margin-bottom: 8px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+        button {
+            width: 100%;
+            padding: 8px;
+            background: #4285f4;
+            border: none;
+            color: white;
+            font-size: 14px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #357ae8;
+        }
+        #formList {
+            list-style: none;
+            padding: 0;
+            margin: 10px 0 0;
+            text-align: left;
+        }
+        #formList li {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            margin: 5px 0;
+            padding: 6px;
+            border-radius: 3px;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Register</h2>
+    <form id="registerForm">
+        <input type="text" id="regName" placeholder="Name" required>
+        <input type="email" id="regEmail" placeholder="Email" required>
+        <input type="password" id="regPassword" placeholder="Password" required>
+        <button type="submit">Register</button>
+    </form>
+</div>
+<div class="container">
+    <h2>Login</h2>
+    <form id="loginForm">
+        <input type="email" id="loginEmail" placeholder="Email" required>
+        <input type="password" id="loginPassword" placeholder="Password" required>
+        <button type="submit">Login</button>
+    </form>
+</div>
+<div class="container">
+    <h2>Submit Form</h2>
+    <form id="submitForm">
+        <input type="text" id="title" placeholder="Title" required>
+        <input type="text" id="description" placeholder="Description" required>
+        <button type="submit">Submit</button>
+    </form>
+</div>
+<div class="container">
+    <h2>Your Forms</h2>
+    <ul id="formList"></ul>
+</div>
+<script>
+let token = "";
+document.getElementById("registerForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const name = document.getElementById("regName").value;
+    const email = document.getElementById("regEmail").value;
+    const password = document.getElementById("regPassword").value;
+    const res = await fetch("http://localhost:5000/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password })
+    });
+    const data = await res.json();
+    alert(data.message);
+});
+document.getElementById("loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = document.getElementById("loginEmail").value;
+    const password = document.getElementById("loginPassword").value;
+    const res = await fetch("http://localhost:5000/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    alert(data.message);
+    if(data.token) token = data.token;
+    loadForms();
+});
+document.getElementById("submitForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!token) { alert("Please login first"); return; }
+    const title = document.getElementById("title").value;
+    const description = document.getElementById("description").value;
+    const res = await fetch("http://localhost:5000/submit", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": token
+        },
+        body: JSON.stringify({ title, description })
+    });
+    const data = await res.json();
+    alert(data.message);
+    loadForms();
+});
+async function loadForms() {
+    if (!token) return;
+
+    const res = await fetch("http://localhost:5000/forms", {
+        headers: { "Authorization": token }
+    });
+    const forms = await res.json();
+    const list = document.getElementById("formList");
+    list.innerHTML = "";
+    forms.forEach(f => {
+        const li = document.createElement("li");
+        li.textContent = `${f.title} - ${f.description} (Submitted: `;
+        list.appendChild(li);
+    });
+}
+</script>
+</body>
+
